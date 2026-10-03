@@ -29,6 +29,14 @@ jobs:
           cp -r shreya_project/* .
           rm -rf shreya_project
 
+      - name: Enable AndroidX
+        run: |
+          cat > gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
+
       - name: Create root Gradle file
         run: |
           cat > build.gradle.kts <<'EOF'
@@ -40,31 +48,34 @@ jobs:
               id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false
           }
           EOF
-- name: Create default app icon
-  run: |
-    mkdir -p app/src/main/res/mipmap-hdpi
-    mkdir -p app/src/main/res/mipmap-mdpi
-    mkdir -p app/src/main/res/mipmap-xhdpi
-    mkdir -p app/src/main/res/mipmap-xxhdpi
-    mkdir -p app/src/main/res/mipmap-xxxhdpi
 
-    python3 - <<'PY'
-    from PIL import Image
+      - name: Create default app icon
+        run: |
+          mkdir -p app/src/main/res/mipmap-mdpi
+          mkdir -p app/src/main/res/mipmap-hdpi
+          mkdir -p app/src/main/res/mipmap-xhdpi
+          mkdir -p app/src/main/res/mipmap-xxhdpi
+          mkdir -p app/src/main/res/mipmap-xxxhdpi
 
-    sizes = {
-        "mdpi": 48,
-        "hdpi": 72,
-        "xhdpi": 96,
-        "xxhdpi": 144,
-        "xxxhdpi": 192
-    }
+          python3 - <<'PY'
+          from PIL import Image
 
-    for density, size in sizes.items():
-        img = Image.new("RGBA", (size, size), (70, 70, 70, 255))
-        img.save(f"app/src/main/res/mipmap-{density}/ic_launcher.png")
-    PY
+          sizes = {
+              "mdpi": 48,
+              "hdpi": 72,
+              "xhdpi": 96,
+              "xxhdpi": 144,
+              "xxxhdpi": 192
+          }
+
+          for density, size in sizes.items():
+              img = Image.new("RGBA", (size, size), (70, 70, 70, 255))
+              img.save(f"app/src/main/res/mipmap-{density}/ic_launcher.png")
+          PY
+
       - name: Build APK
-        run: gradle assembleDebug --no-daemon
+        run: |
+          gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
