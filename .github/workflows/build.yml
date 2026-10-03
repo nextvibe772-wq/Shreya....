@@ -9,23 +9,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout project
         uses: actions/checkout@v4
 
-      - name: Setup JDK
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
+      - name: Extract Shreya ZIP
+        run: |
+          unzip -o Shreya2.zip -d shreya_project
+          cp -r shreya_project/* .
+          rm -rf shreya_project
+
+      - name: Create root Gradle file
+        run: |
+          cat > build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.5.2" apply false
+              id("org.jetbrains.kotlin.android") version "1.9.22" apply false
+              id("org.jetbrains.kotlin.kapt") version "1.9.22" apply false
+              id("org.jetbrains.kotlin.plugin.parcelize") version "1.9.22" apply false
+              id("com.google.devtools.ksp") version "1.9.22-1.0.17" apply false
+          }
+          EOF
 
       - name: Build APK
-        run: ./gradlew assembleDebug
+        run: gradle assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
